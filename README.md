@@ -20,7 +20,9 @@ This strategy has two advantages:
 
 ### FedCG Training Procedure
 
-The training steps of FedCG are divided into two-phase client updates (as shown in Figure 2) and server-side aggregation (as shown in Figure 3). In the two-phase client updates, we first optimize the classification network (including the feature extractor and classifier) using the global generator sent from the server, and then train a local generator to fit the output representation of the feature extractor $G(z,y) \approx F(x|y)$. We use this local generator to replace the feature extractor, aggregating the knowledge from all clients on the server side while protecting data privacy.
+The training steps of FedCG are divided into two-phase client updates (as shown in Figure 2) and server-side aggregation (as shown in Figure 3). 
+
+In the two-phase client updates, we first optimize the classification network (including the feature extractor and classifier) using the global generator sent from the server, and then train a local generator to fit the output representation of the feature extractor $G(z,y) \approx F(x|y)$. We use this local generator to replace the feature extractor, aggregating the knowledge from all clients on the server side while protecting data privacy.
 
 <p align="center">
   <img src="figs/clip_image006.jpg"/>
