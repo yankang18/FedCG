@@ -111,7 +111,7 @@ python main.py --algorithm="fedcg" --dataset="cifar" --model="lenet5" --seed=1 -
 | `global_iter_per_epoch` | Number of iteration per epoch for server training, default = `100`. |
 | `mu` | The proximal term parameter for FedProx, default = `0.01`. |
 
-
+- `model_inversion` folder contains code for model inversion attack.
 
 ## Citation
 
