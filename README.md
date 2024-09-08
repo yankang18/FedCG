@@ -1,74 +1,87 @@
 # FedCG: Leverage Conditional GAN for Protecting Privacy and Maintaining Competitive Performance in Federated Learning
 
-## FedCG介绍
+## Introduction
 
-联邦学习（FL）旨在通过让客户端在不分享其私人数据、保护数据隐私的前提下协作建立机器学习模型。最近的一些研究证明了在联邦学习过程中交换的信息会受到基于梯度的隐私攻击，因此，各种隐私保护方法已被采用来阻止此类攻击，保护数据隐私。然而，这些防御性方法要么引入数量级更多的计算和通信开销（例如，同态加密），要么在预测准确性方面导致模型性能大幅下降（例如，使用差分隐私）。**FedCG**将条件生成对抗网络与分割学习相结合，实现对数据的有效隐私保护，同时保持有竞争力的模型性能。
+Federated Learning (FL) aims to enable clients to collaboratively build machine learning models without sharing their private data, thereby protecting data privacy. Recent studies have demonstrated that the information exchanged during the federated learning process is susceptible to gradient-based privacy attacks. Consequently, various privacy-preserving methods have been employed to thwart such attacks and safeguard data privacy. However, these defensive approaches either introduce an order of magnitude more computational and communication overhead (e.g., homomorphic encryption) or significantly degrade model performance in terms of predictive accuracy (e.g., using differential privacy). FedCG combines Conditional Generative Adversarial Networks with segmentation learning to achieve effective privacy protection for data while maintaining competitive model performance.
 
-更具体地说，FedCG将每个客户端的本地网络分解为私有特征提取器（extractor）和公共分类器（classifier），并将特征提取器保留在本地以保护隐私。每个客户端用一个生成器（generator）来拟合特征提取器的输出表征。FedCG的新颖之处在于它与服务器共享客户端的生成器而不是提取器，以聚合客户端的共享知识，提高模型性能 (如图1)。
+More specifically, FedCG decomposes each client's local network into a private feature extractor and a public classifier, keeping the feature extractor local to protect privacy. Each client uses a generator to match the output representation of the feature extractor. The novelty of FedCG lies in its sharing of the client's generator with the server instead of the extractor, to aggregate the shared knowledge of the clients and enhance model performance (as shown in Figure 1).
 
 <p align="center">
   <img src="figs/clip_image002.png"/>
-  <center>图1：FedCG 架构概览</center>
+  <center>Figure 1：FedCG overview </center>
 </p>
 
 
 
-这种策略有两个直接的优势：首先，与服务器可以得到完整的客户端模型的联邦学习方法（例如，FedAvg 和 FedProx）相比，FedCG没有暴露直接与原始数据接触的模型 (也即，extractor)，因此客户端数据泄露的可能性显著降低。其次，服务器可以使用知识蒸馏（Hinton, Vinyals, and Dean 2015）聚合客户端的生成器和分类器，而无需访问任何公共数据。
+This strategy has two advantages: 
 
+- First, compared to conventional federated learning methods where the server can obtain complete client models (such as FedAvg and FedProx), FedCG does not expose models that are directly in contact with the raw data (i.e., the extractor), thus significantly reducing the possibility of client data leakage. 
+- Second, the server can aggregate the generators and classifiers from the clients using knowledge distillation (Hinton, Vinyals, and Dean 2015) without accessing any public data.
 
+### FedCG Training Procedure
 
-### FedCG训练步骤
-
-FedCG的训练步骤分为两阶段客户端更新（如图2）和服务器端聚合（如图3）。在两阶段客户端更新中，我们首先利用从服务器下发的全局生成器来优化分类网络（包括特征提取器和分类器），然后再训练一个本地生成器来拟合特征提取器的输出表征 $G(z,y) \approx F(x|y)$  我们用这个本地生成器来代替特征提取器, 在服务器端聚合所有客户端的知识同时保护数据隐私。
+The training steps of FedCG are divided into two-phase client updates (as shown in Figure 2) and server-side aggregation (as shown in Figure 3). In the two-phase client updates, we first optimize the classification network (including the feature extractor and classifier) using the global generator sent from the server, and then train a local generator to fit the output representation of the feature extractor $G(z,y) \approx F(x|y)$. We use this local generator to replace the feature extractor, aggregating the knowledge from all clients on the server side while protecting data privacy.
 
 <p align="center">
   <img src="figs/clip_image006.jpg"/>
-  <center>图2：FedCG 客户端训练示意图。</center>
+  <center>Figure 2：client side training procedure of FedCG.</center>
 </p>
 
 
 
-在服务器端聚合中，我们通过知识蒸馏的方式聚合一个公共分类器 $C_g$ 和一个公共生成器 $G_g$ 。然后，服务器下发公共分类器和公共生成器给每个客户端。
+In the server-side, we aggregate a global classifier $C_g$ and a global generator $G_g$ through the method of knowledge distillation. Then, the server sends the global classifier and the global generator to each client.
 
 <p align="center">
   <img src="figs/clip_image008.jpg"/>
-  <center>图3：FedCG服务器端训练示意图。</center>
+  <center>Figure 3: server side training procedure of FedCG.</center>
 </p>
 
 
 
-### FedCG实验结果
+### Experimental Results
 
-如表1所示，总体来说，FedCG 在4个数据集 (共6个数据集) 上取得最高准确率. 在IID 场景 : 在 FMNIST 上达到最高准确率。在Non-IID 场景: 在 3 个数据集上都达到最优，特别是在 Office 数据集上，FedCG比第二高准确率的 FedProx 高出 4.35% 。
+As shown in Table 1, overall, FedCG achieves the highest accuracy on 4 out of 6 datasets. In the IID scenario: it achieves the highest accuracy on FMNIST. In the Non-IID scenario: it achieves the best performance on 3 datasets, especially on the Office dataset, where FedCG outperforms FedProx, the second-highest accuracy, by 4.35%.
 
  <p align="center">
   <img src="figs/clip_image010.jpg"/>
-  <center>表1：FedCG与基线在Top-1精度上的比较。粗体字表示最好的性能。*表示没有测量结果。括号内的数字表示客户端数量。</center>
+  <center>Table 1: Comparison of Top-1 accuracy between FedCG and baselines. Boldface indicates the best performance. An asterisk (*) denotes that no measurement results are available. The numbers in parentheses indicate the number of clients.</center>
 </p>
 
 
+IID Scenario: All FL methods significantly outperformed local models on all clients. On the FMNIST dataset, FedCG performed the best across all clients (see Figure 4(a)). The performance of FedCG is comparable to those FL methods that share all local models (see Figure 4(b)).
 
-IID 场景: 所有的FL方法在所有的客户端上都以较大的优势超过了本地模型。在FMNIST数据集上，FedCG在所有客户端的表现都是最好的（见图4（a））。FedCG的表现与那些共享所有本地模型的FL方法相差不大（见图4（b））。Non-IID 场景: 在所有3个Non-IID数据集中，没有一种FL方法能在每个客户上都击败本地模型（见图4（c），图4（d）和图4（e））。 FedCG在最多的客户端上取得了最好的效果。同时也是击败local最多的算法。
- <p align="center">
+Non-IID Scenario: In all three Non-IID datasets, no FL method was able to defeat local models on every client (see Figures 4(c), 4(d), and 4(e)). FedCG achieved the best results on the greatest number of clients. It is also the algorithm that defeated local models the most frequently.
+
+<p align="center">
   <img src="figs/clip_image012.png"/>
-  <center>图4：在5个数据集上的实验中，在每个客户端上FEDAVG、FEDPROX、FEDDF、FEDSPLIT和FEDCG（红色）与LOCAL相比，都取得了精度提高。纵轴是准确性方面的性能差异（%）。正的（负的）收益意味着FL方法比LOCAL方法取得了 比LOCAL模型更好（更差）。</center>
+  <center>Figure 4: In experiments across 5 datasets, FEDAVG, FEDPROX, FEDDF, FEDSPLIT, and FedCG (in red) all achieved accuracy improvements compared to LOCAL on each client. The vertical axis represents the performance difference in accuracy (%). Positive (negative) gains mean that the FL method performed better (worse) than the LOCAL model.</center>
 </p>
  
 
-如表2所示，隐私分析的实验结果表明，使用FedAvg，随着 DP 噪声添加得越多，能更好的保护隐私，但会导致较大的准确率损失；使用FedSplit，能保护隐私, 但有较大的准确率损失；使用FedCG，能在保护隐私的条件下，取得一个较高的准确率。
+As shown in Table 2, the experimental results of the privacy analysis indicate that with FedAvg, the more DP noise added, the better the privacy protection, but it leads to a significant loss in accuracy; with FedSplit, privacy can be protected, but there is a substantial loss in accuracy; with FedCG, a higher accuracy can be achieved while maintaining privacy protection.
 
 <p align="center">
   <img src="figs/clip_image014.jpg"/>
-  <center>表2： FedAVG，FedSPLIT和FedCG的模型性能与隐私保护效果对比</center>
+  <center>Table 2: Comparison of model performance and privacy protection effects between FedAVG, FedSPLIT, and FedCG.</center>
 </p>
 
-### 总结和后续工作
+### Summary and Future Work
+We have proposed FedCG, with the aim of protecting data privacy while maintaining competitive model performance. FedCG decomposes each client's local network into a private feature extractor and a public classifier, keeping the feature extractor local to protect privacy. It shares the client's generator with the server to aggregate shared knowledge, thereby enhancing the performance of the client's local classification network. Experiments have shown that FedCG has a high level of privacy protection capability and can achieve competitive model performance.
 
-我们提出了FedCG，目的是保护数据隐私，同时保持有竞争力的模型性能。FedCG将每个客户的本地网络分解为一个私有特征提取器和一个公共分类器，并将特征提取器保持在本地以保护隐私。它与服务器共享客户端的生成器，以聚合共享知识，从而提高客户端本地分类网络的性能。实验表明 FedCG具有高水平的隐私保护能力，并且可以实现有竞争力的模型性能。
+The shortcomings of this paper lie in the fact that the theoretical analysis of privacy protection for FedCG remains to be explored. Additionally, this paper uses LeNet as the local network, which is relatively small in model size. The authors will investigate deeper neural networks to further test the effectiveness of the FedCG method.
 
-本篇论文的不足之处在于FedCG的隐私保护理论分析仍待研究。此外，本篇论文使用 LeNet 作为本地网络，模型较小。作者将研究更深层次的神经网络，以进一步检验 FedCG 方法的有效性。
+## Data
+
+- Digit5 
+https://drive.google.com/open?id=1A4RJOFj4BJkmliiEL7g9WzNIDUHLxfmm
 
 
+- Office-Caltech10 
+https://github.com/jindongwang/transferlearning/tree/master/data#office-caltech10
+
+- DomainNet 
+https://datasets.activeloop.ai/docs/ml/datasets/domainnet-dataset/
+https://ai.bu.edu/M3SDA/#dataset
 
 
 ## Usage
